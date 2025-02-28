@@ -1,5 +1,5 @@
 /*
-    Phone Booth Installation
+    PHONE BOOTH INSTALLATION
     Noah Dinan & Daisy DiCarlo
 
     https://github.com/PortAudio/portaudio
@@ -8,15 +8,15 @@
     https://docs.google.com/document/d/1XouO8o9H_l_IDd2_Z0JVcL264ybqdvaisL009b8jgXM
  */
 
-#include "portaudio.h"
-#include "iostream"
+#include <portaudio.h>
+#include <iostream>
 
 using namespace std;
 
 const int NUM_CHANNELS = 1;
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const int SAMPLE_RATE = 44100;
-const int FRAMES_PER_BUFFER = 128;
+const int FRAMES_PER_BUFFER = 256;
 
 int main() {
     PaStreamParameters* inputParams;
@@ -24,10 +24,8 @@ int main() {
     PaStream *stream;
     PaError err;
 
-    cout << Pa_GetVersionText();
-
     err = Pa_Initialize();
-    if (err != paNoError) goto error;
+    if (err != paNoError) goto end;
 
     // fill input and output parameters
     inputParams->device = Pa_GetDefaultInputDevice();
@@ -50,13 +48,14 @@ int main() {
             outputParams,
             SAMPLE_RATE,
             FRAMES_PER_BUFFER,
-            paClipOff,
+            paNoFlag,
             NULL,
             NULL);
+    if (err != paNoError) goto end;
 
     // start stream
     err = Pa_StartStream(stream);
-    cout << "stream started";
+    if (err != paNoError) goto end;
 
 
     // PSEUDOCODE FROM NOTEBOOK (GENIUS CODE)
@@ -79,25 +78,35 @@ int main() {
     // }
     //
     // playback the phrase or random phrase from phrases
-
-
+    
     // loop passing data from input to output
-    for (int i = 0; i < (60*SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {
-        void* buffer;
+    for (int i = 0; i < (5 * SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {
+        void* buffer[FRAMES_PER_BUFFER];
+
         err = Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER);
+        float* b = (float*) buffer;
+
+        double average_amplitude = 0.0f;
+        for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
+            /*average_amplitude += (float) b[j];*/
+            cout << b[j] << endl;
+        }
+
+        // average value for a buffer
+        cout << "avg: " << (average_amplitude / (double) FRAMES_PER_BUFFER) << endl;
+
         err = Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
     }
 
-    error:
-        cout << "error";
-        
+    end:
 
-    // cleanup
-    err = Pa_StopStream( stream );
-    err = Pa_CloseStream( stream );
+    err = Pa_StopStream(stream);
+    err = Pa_CloseStream(stream);
 
-    Pa_Terminate();
+    err = Pa_Terminate();
+    if (err != paNoError) {
+        cerr << Pa_GetErrorText(err);
+        return 1;
+    }
     return 0;
 }
-
-
