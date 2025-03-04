@@ -16,12 +16,13 @@ using namespace std;
 const int NUM_CHANNELS = 1;
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const int SAMPLE_RATE = 44100;
-const int FRAMES_PER_BUFFER = 256;
+const int FRAMES_PER_BUFFER = 128;
+const float AMBIENT_THRESHOLD = 0.3;
 
 int main() {
-    PaStreamParameters* inputParams;
-    PaStreamParameters* outputParams;
-    PaStream *stream;
+    PaStreamParameters* inputParams = new PaStreamParameters;
+    PaStreamParameters* outputParams = new PaStreamParameters;
+    PaStream* stream;
     PaError err;
 
     err = Pa_Initialize();
@@ -31,7 +32,7 @@ int main() {
     inputParams->device = Pa_GetDefaultInputDevice();
     inputParams->channelCount = NUM_CHANNELS;
     inputParams->sampleFormat = PA_SAMPLE_TYPE;
-    inputParams->suggestedLatency = Pa_GetDeviceInfo(inputParams->device)->defaultHighInputLatency ;
+    inputParams->suggestedLatency = Pa_GetDeviceInfo(inputParams->device)->defaultHighInputLatency;
     inputParams->hostApiSpecificStreamInfo = NULL;
 
     outputParams->device = Pa_GetDefaultOutputDevice();
@@ -48,7 +49,7 @@ int main() {
             outputParams,
             SAMPLE_RATE,
             FRAMES_PER_BUFFER,
-            paNoFlag,
+            paClipOff,
             NULL,
             NULL);
     if (err != paNoError) goto end;
@@ -78,25 +79,37 @@ int main() {
     // }
     //
     // playback the phrase or random phrase from phrases
-    
+
+    float five_second_clip[(5 * SAMPLE_RATE) / FRAMES_PER_BUFFER][FRAMES_PER_BUFFER];
+
     // loop passing data from input to output
     for (int i = 0; i < (5 * SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {
         void* buffer[FRAMES_PER_BUFFER];
 
         err = Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER);
-        float* b = (float*) buffer;
+        float *b = (float*) buffer;
 
-        double average_amplitude = 0.0f;
+        double average = 0.0;
+
         for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
-            /*average_amplitude += (float) b[j];*/
-            cout << b[j] << endl;
+            five_second_clip[i][j] = b[j];
+            average += abs(b[j]);
         }
 
         // average value for a buffer
-        cout << "avg: " << (average_amplitude / (double) FRAMES_PER_BUFFER) << endl;
+        if ((average / (double) FRAMES_PER_BUFFER) > AMBIENT_THRESHOLD) {
+            cout << "sound!!!" << endl;
+        } else {
+            cout << "-";
+            cout.flush();
+        }
 
         err = Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
     }
+
+    /*for (int i = 0; i < (5 * SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {*/
+    /*    err = Pa_ReadStream(stream, five_second_clip[i], FRAMES_PER_BUFFER);*/
+    /*}*/
 
     end:
 
