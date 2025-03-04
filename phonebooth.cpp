@@ -98,10 +98,9 @@ int main() {
 
         // average value for a buffer
         if ((average / (double) FRAMES_PER_BUFFER) > AMBIENT_THRESHOLD) {
-            cout << "sound!!!" << endl;
+            cout << "..." << endl;
         } else {
-            cout << "-";
-            cout.flush();
+            cout << "." << endl;
         }
 
         err = Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
