@@ -10,6 +10,7 @@
 
 #include <portaudio.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 using namespace std;
@@ -19,17 +20,23 @@ const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const int SAMPLE_RATE = 44100;
 const int FRAMES_PER_BUFFER = 128;
 const float AMBIENT_THRESHOLD = 0.2;
-const int TIME_RUNNING = 5;
+const double TIME_RUNNING = 1.5;
+PaStream* stream;
+
+int end(PaError);
+int end(PaError);
 
 int main() {
     PaStreamParameters* inputParams = new PaStreamParameters;
     PaStreamParameters* outputParams = new PaStreamParameters;
-    PaStream* stream;
     PaError err;
-    vector<vector<float>> phrases = vector<vector<float>>();
+    vector<float> phrase;
+
+    int silence_counter = 0;
+    int length = 0;
 
     err = Pa_Initialize();
-    if (err != paNoError) goto end;
+    if (err != paNoError) end(err);
 
     // fill input and output parameters
     inputParams->device = Pa_GetDefaultInputDevice();
@@ -55,83 +62,61 @@ int main() {
             paClipOff,
             NULL,
             NULL);
-    if (err != paNoError) goto end;
+    if (err != paNoError) end(err);
 
     // start stream
     err = Pa_StartStream(stream);
-    if (err != paNoError) goto end;
+    if (err != paNoError) end(err);
 
-
-    // PSEUDOCODE FROM NOTEBOOK (GENIUS CODE)
-    //
-    // Phrase[] phrases
-    // int silence_counter = 0;
-    // Phrase phrase;
-    //
-    // while (silence_counter < (180 * SAMPLE_RATE)) {
-    //      record buffer -> phrase
-    //      if (level < 0.5) {
-    //          silence_counter++;
-    //      } else {
-    //          silence_counter = 0;
-    //      }
-    // }
-    //
-    // if (phrase longer than 4 seconds) {
-    //      save phrase to phrases
-    // }
-    //
-    // playback the phrase or random phrase from phrases
-
-    float five_second_clip[(TIME_RUNNING * SAMPLE_RATE) / FRAMES_PER_BUFFER][FRAMES_PER_BUFFER];
-
-    // loop passing data from input to output
-    for (int i = 0; i < (TIME_RUNNING * SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {
+    while (silence_counter < (TIME_RUNNING * (double) SAMPLE_RATE) / FRAMES_PER_BUFFER) {
         float buffer[FRAMES_PER_BUFFER];
-        vector<float> vector_buffer (FRAMES_PER_BUFFER);
-
         Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
-
-        vector_buffer.assign(FRAMES_PER_BUFFER, *buffer);
-
-        phrases.push_back(vector_buffer);
 
         double average = 0.0;
 
         for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
-            five_second_clip[i][j] = buffer[j];
+            /*phrases[(length * FRAMES_PER_BUFFER) + j] = buffer[j];*/
+            /*file << buffer[j] << endl; // how slow is this..?*/
+            phrase.push_back(buffer[j]);
             average += abs(buffer[j]);
         }
 
+        average = (average / (double) FRAMES_PER_BUFFER);
 
-        // average value for a buffer
-        if ((average / (double) FRAMES_PER_BUFFER) > AMBIENT_THRESHOLD) {
-            cout << "|||||||||||||||" << endl;
-        } else {
-            cout << "." << endl;
-        }
+        if (average > AMBIENT_THRESHOLD) cout << "|||||||||||||||" << endl;
+        else cout << "." << endl;
+
+        if (average < AMBIENT_THRESHOLD) silence_counter++;
+        else silence_counter = 0;
+
+        length++;
     }
 
-    cout << "Playing back to you!" << endl;
-    Pa_Sleep(500);
-
-    // playback from array
-    for (int i = 0; i < (TIME_RUNNING * SAMPLE_RATE) / FRAMES_PER_BUFFER; i++) {
-        /*Pa_WriteStream(stream, &phrases[i], FRAMES_PER_BUFFER);*/
-        /*cout << phrases[i] << " : " << five_second_clip[i] << endl;*/
-        Pa_WriteStream(stream, five_second_clip[i], FRAMES_PER_BUFFER);
-    }
-
-    /*for (float phrase : *phrases) {*/
-    /*    cout << phrase << endl;*/
-    /*    Pa_WriteStream(stream, &phrase, FRAMES_PER_BUFFER); // how to pass a reference to the phrase?*/
+    /*vector<float> phrase(SAMPLE_RATE);*/
+    /*while (file) {*/
+    /*    float sample;*/
+    /*    file >> sample;*/
+    /*    phrase.push_back(sample);*/
     /*}*/
 
-    end:
+    /*cout << "read in the file to vec" << endl;*/
+
+    /*file.close();*/
+
+    for (unsigned int i = 0; i < phrase.size(); i++) {
+        Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
+    }
 
     err = Pa_StopStream(stream);
-    err = Pa_CloseStream(stream);
+    if (err != paNoError) end(err);
 
+    err = Pa_CloseStream(stream);
+    if (err != paNoError) end(err);
+
+    return end(err);
+}
+
+int end(PaError err) {
     err = Pa_Terminate();
     if (err != paNoError) {
         cerr << Pa_GetErrorText(err);

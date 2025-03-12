@@ -1,6 +1,5 @@
 ### phonebooth todo
 * writeup about project
 * photos
-* uml diagram?
-* how to compile
+* how to compile / run
 * resources, software and hardware used
