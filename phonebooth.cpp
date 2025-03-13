@@ -28,8 +28,7 @@ const int NUM_CHANNELS = 1;
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const int SAMPLE_RATE = 44100;
 const int FRAMES_PER_BUFFER = 128;
-const float AMBIENT_THRESHOLD = 0.2;
-const double TIME_RUNNING = 1.5;
+const float AMBIENT_THRESHOLD = 0.3;
 PaStream* stream;
 
 int end(PaError);
@@ -38,7 +37,6 @@ int main() {
     PaStreamParameters* inputParams = new PaStreamParameters;
     PaStreamParameters* outputParams = new PaStreamParameters;
     PaError err;
-    vector<float> phrase;
 
     int silence_counter = 0;
     int length = 0;
@@ -76,7 +74,9 @@ int main() {
     err = Pa_StartStream(stream);
     if (err != paNoError) end(err);
 
+    Pa_Sleep(1000);
 
+    float prev_buffer[FRAMES_PER_BUFFER];
 
     while (true) {
         double average = 0.0;
@@ -91,11 +91,18 @@ int main() {
         average = (average / (double) FRAMES_PER_BUFFER);
 
         if (average > AMBIENT_THRESHOLD) {
+            cout << "starting recording!" << endl;
             // record buffer and start recording and waiting for silence
 
             int silence_counter = 0;
+            vector<float> phrase;
 
-            while (silence_counter < (TIME_RUNNING * (double) SAMPLE_RATE) / FRAMES_PER_BUFFER) { // MAKE THIS PRETTIER
+            // copy previous buffer into phrase
+            for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
+                phrase.push_back(prev_buffer[j]);
+            }
+
+            while (silence_counter < (2 * SAMPLE_RATE) / FRAMES_PER_BUFFER) { // MAKE THIS PRETTIER
                 double average = 0.0;
 
                 for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
@@ -109,21 +116,19 @@ int main() {
 
                 if (average < AMBIENT_THRESHOLD) silence_counter++;
                 else silence_counter = 0;
-
-
-                // just display levels
-                if (average > AMBIENT_THRESHOLD) cout << "|||||||||||||||" << endl;
-                else cout << " " << endl;
             }
-
             // is phrase vector length long enough?
             // if (phrase.size() > 3 seconds) {}
 
             // play!!
-            for (unsigned int i = 0; i < phrase.size(); i++) {
+            for (unsigned int i = 0; i < phrase.size() / FRAMES_PER_BUFFER; i++) {
                 Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
             }
+        } else {
+            // save this buffer in case the next is loud enough?
+            copy(buffer, buffer + FRAMES_PER_BUFFER, prev_buffer);
         }
+
     }
 
 
