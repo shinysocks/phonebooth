@@ -8,6 +8,15 @@
     https://docs.google.com/document/d/1XouO8o9H_l_IDd2_Z0JVcL264ybqdvaisL009b8jgXM
  */
 
+
+// refactor todo:
+//      move PA stuff to class
+//      move average to func
+//      fix error handling
+//      more file operations to func
+//      clean up main while loop
+
+
 #include <portaudio.h>
 #include <iostream>
 #include <fstream>
@@ -23,7 +32,6 @@ const float AMBIENT_THRESHOLD = 0.2;
 const double TIME_RUNNING = 1.5;
 PaStream* stream;
 
-int end(PaError);
 int end(PaError);
 
 int main() {
@@ -68,44 +76,66 @@ int main() {
     err = Pa_StartStream(stream);
     if (err != paNoError) end(err);
 
-    while (silence_counter < (TIME_RUNNING * (double) SAMPLE_RATE) / FRAMES_PER_BUFFER) {
+
+
+    while (true) {
+        double average = 0.0;
         float buffer[FRAMES_PER_BUFFER];
+
         Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
 
-        double average = 0.0;
-
+        // get_average_level_for_buffer()
         for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
-            /*phrases[(length * FRAMES_PER_BUFFER) + j] = buffer[j];*/
-            /*file << buffer[j] << endl; // how slow is this..?*/
-            phrase.push_back(buffer[j]);
             average += abs(buffer[j]);
         }
-
         average = (average / (double) FRAMES_PER_BUFFER);
 
-        if (average > AMBIENT_THRESHOLD) cout << "|||||||||||||||" << endl;
-        else cout << "." << endl;
+        if (average > AMBIENT_THRESHOLD) {
+            // record buffer and start recording and waiting for silence
 
-        if (average < AMBIENT_THRESHOLD) silence_counter++;
-        else silence_counter = 0;
+            int silence_counter = 0;
 
-        length++;
+            while (silence_counter < (TIME_RUNNING * (double) SAMPLE_RATE) / FRAMES_PER_BUFFER) { // MAKE THIS PRETTIER
+                double average = 0.0;
+
+                for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
+                    phrase.push_back(buffer[j]);
+                    average += abs(buffer[j]);
+                }
+
+                average = (average / (double) FRAMES_PER_BUFFER);
+
+                Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
+
+                if (average < AMBIENT_THRESHOLD) silence_counter++;
+                else silence_counter = 0;
+
+
+                // just display levels
+                if (average > AMBIENT_THRESHOLD) cout << "|||||||||||||||" << endl;
+                else cout << " " << endl;
+            }
+
+            // is phrase vector length long enough?
+            // if (phrase.size() > 3 seconds) {}
+
+            // play!!
+            for (unsigned int i = 0; i < phrase.size(); i++) {
+                Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
+            }
+        }
     }
 
+
+    // eventual read from file code
     /*vector<float> phrase(SAMPLE_RATE);*/
     /*while (file) {*/
     /*    float sample;*/
     /*    file >> sample;*/
     /*    phrase.push_back(sample);*/
     /*}*/
-
-    /*cout << "read in the file to vec" << endl;*/
-
     /*file.close();*/
 
-    for (unsigned int i = 0; i < phrase.size(); i++) {
-        Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
-    }
 
     err = Pa_StopStream(stream);
     if (err != paNoError) end(err);
