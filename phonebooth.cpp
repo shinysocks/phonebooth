@@ -33,7 +33,7 @@ const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const int SAMPLE_RATE = 44100;
 const int FRAMES_PER_BUFFER = 256;
 const float AMBIENT_THRESHOLD = 0.3;
-const double SILENCE_CUTOFF = (2.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
+const double SILENCE_CUTOFF = (5.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 PaStream* stream;
 
 int end(PaError);
@@ -139,7 +139,7 @@ int main() {
 }
 
 void play(vector<float> &phrase) {
-    for (unsigned int i = 0; i < (phrase.size() / FRAMES_PER_BUFFER) - (SAMPLE_RATE / FRAMES_PER_BUFFER); i++) { // don't play the a second at the end
+    for (unsigned int i = 0; i < (phrase.size() / FRAMES_PER_BUFFER) - (4 * SAMPLE_RATE / FRAMES_PER_BUFFER); i++) { // don't play the a second at the end
         Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
     }
     cout << "finished playing the recording" << endl;
