@@ -11,7 +11,7 @@
     https://github.com/shinysocks/phonebooth
     https://github.com/PortAudio/portaudio
     https://portaudio.com/docs/v19-doxydocs/blocking_read_write.html
-    https://docs.google.com/document/d/1XouO8o9H_l_IDd2_Z0JVcL264ybqdvaisL009b8jgXM
+    https://www.adafruit.com/product/3055
  */
 
 #include <filesystem>
