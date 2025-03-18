@@ -1,13 +1,20 @@
 /*
-    PHONE BOOTH INSTALLATION
-    Noah Dinan & Daisy DiCarlo
+    ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗    ██████╗  ██████╗  ██████╗ ████████╗██╗  ██╗    ███╗
+    ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝    ██╔══██╗██╔═══██╗██╔═══██╗╚══██╔══╝██║  ██║    ╚██║
+    ██████╔╝███████║██║   ██║██╔██╗ ██║█████╗      ██████╔╝██║   ██║██║   ██║   ██║   ███████║     ██║
+    ██╔═══╝ ██╔══██║██║   ██║██║╚██╗██║██╔══╝      ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══██║     ██║
+    ██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗    ██████╔╝╚██████╔╝╚██████╔╝   ██║   ██║  ██║    ███║
+    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝    ╚═════╝  ╚═════╝  ╚═════╝    ╚═╝   ╚═╝  ╚═╝    ╚══╝
 
+    source code for an interactive art installation by Daisy DiCarlo
+
+    https://github.com/shinysocks/phonebooth
     https://github.com/PortAudio/portaudio
-    https://www.portaudio.com/docs/v19-doxydocs/paex__record_8c_source.html
     https://portaudio.com/docs/v19-doxydocs/blocking_read_write.html
     https://docs.google.com/document/d/1XouO8o9H_l_IDd2_Z0JVcL264ybqdvaisL009b8jgXM
  */
 
+#include <filesystem>
 #include <portaudio.h>
 #include <iostream>
 #include <fstream>
@@ -15,30 +22,39 @@
 
 using namespace std;
 
-const int NUM_CHANNELS = 1;
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
-const int SAMPLE_RATE = 44100;
-const int FRAMES_PER_BUFFER = 256;
+const string PHRASES_PATH = "phrases/";
 const float AMBIENT_THRESHOLD = 0.3;
-const double SILENCE_CUTOFF = (5.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
+const int FRAMES_PER_BUFFER = 256;
+const int SAMPLE_RATE = 44100;
+const int NUM_CHANNELS = 1;
 PaStream* stream;
+
+// SILENCE_CUTOFF: length of silence until a recording is ended
+const double SILENCE_CUTOFF = (5.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
+
+// ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 2 seconds
+const double ACCEPTABLE_PHRASE_CUTOFF = (7.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 
 int end(PaError);
 double average_buffer_level(float[]);
 void play(vector<float> &phrase);
+void play_random_phrase();
 PaError initialize();
+void save_phrase_to_file(vector<float> &phrase);
 
 int main() {
     PaError err = initialize();
     if (err != paNoError) end(err);
 
     float prev_buffer[FRAMES_PER_BUFFER];
+
     while (true) {
         float buffer[FRAMES_PER_BUFFER];
         Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
 
         if (average_buffer_level(buffer) > AMBIENT_THRESHOLD) {
-            cout << "started recording" << endl;
+            cout << "recording..." << endl;
             int silence_counter = 0;
             vector<float> phrase;
 
@@ -60,24 +76,19 @@ int main() {
                 else silence_counter = 0;
             }
 
-            // is phrase vector length long enough?
-            /*if (phrase.size() > 3 seconds) {}*/
+            // is freshly recorded phrase long enough?
+            if (phrase.size() > SILENCE_CUTOFF)
+                save_phrase_to_file(phrase);
+            play_random_phrase();
 
-            play(phrase);
         } else {
-            // save buffer to prev_buffer in case the next is loud enough
+            /* 
+             * save `buffer` to `prev_buffer` in case the next is loud enough
+             * to prevent phrase from starting too abruptly
+             */ 
             copy(buffer, buffer + FRAMES_PER_BUFFER, prev_buffer);
         }
     }
-
-    // eventual read from file code
-    /*vector<float> phrase(SAMPLE_RATE);*/
-    /*while (file) {*/
-    /*    float sample;*/
-    /*    file >> sample;*/
-    /*    phrase.push_back(sample);*/
-    /*}*/
-    /*file.close();*/
 
     err = Pa_StopStream(stream);
     if (err != paNoError) end(err);
@@ -86,6 +97,50 @@ int main() {
     if (err != paNoError) end(err);
 
     return end(err);
+}
+
+unsigned int count_saved_phrases() {
+    unsigned int n = 0;
+    for (auto _ : filesystem::directory_iterator(PHRASES_PATH))
+        n++;
+    return n;
+}
+
+void save_phrase_to_file(vector<float> &phrase) {
+    auto n = count_saved_phrases();
+    ofstream file(PHRASES_PATH + to_string(n));
+
+    for (auto sample : phrase)
+        file << sample << endl;
+
+    file.close();
+    cout << "saved: [" << PHRASES_PATH + to_string(n) << "]" << endl; 
+}
+
+void play(vector<float> &phrase) {
+    // skip the last 4 seconds
+    int playback_duration = (phrase.size() / FRAMES_PER_BUFFER) - (4 * SAMPLE_RATE / FRAMES_PER_BUFFER);
+
+    for (int i = 0; i < playback_duration; i++) {
+        Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
+    }
+
+    phrase.clear();
+}
+
+void play_random_phrase() {
+    vector<float> phrase;
+    int random_index = rand() % (count_saved_phrases() + 1);
+    ifstream f(PHRASES_PATH + to_string(random_index));
+
+    while (f) {
+        float sample;
+        f >> sample;
+        phrase.push_back(sample);
+    } f.close();
+
+    play(phrase);
+    cout << "played: [" << random_index << "]" << endl;
 }
 
 PaError initialize() {
@@ -123,17 +178,6 @@ PaError initialize() {
     err = Pa_StartStream(stream);
 
     return err;
-}
-
-void play(vector<float> &phrase) {
-    int playback_duration = (phrase.size() / FRAMES_PER_BUFFER) - (4 * SAMPLE_RATE / FRAMES_PER_BUFFER);
-
-    for (int i = 0; i < playback_duration; i++) { // don't play 4 seconds at the end
-        Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
-    }
-
-    cout << "played" << endl;
-    phrase.clear();
 }
 
 double average_buffer_level(float buffer[]) {
