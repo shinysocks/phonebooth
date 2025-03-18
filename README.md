@@ -19,4 +19,6 @@
 >- [pa_compile_linux](https://portaudio.com/docs/v19-doxydocs/compile_linux.html)
 >
 >- build and run the project:
->```make```
+>```
+>make
+>```
