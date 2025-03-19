@@ -16,7 +16,7 @@
 >- ensure both [ALSA](https://www.alsa-project.org/wiki/Main_Page) and [make](https://www.gnu.org/software/make/manual/make.html) are installed
 >
 >- first compile the `libportaudio.a` library file for portaudio
->- [pa_compile_linux](https://portaudio.com/docs/v19-doxydocs/compile_linux.html)
+  >    - [pa_compile_linux](https://portaudio.com/docs/v19-doxydocs/compile_linux.html)
 >
 >- build and run the project:
 >```
