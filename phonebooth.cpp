@@ -24,7 +24,7 @@ using namespace std;
 
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const string PHRASES_PATH = "phrases/";
-const float AMBIENT_THRESHOLD = 0.3;
+const float AMBIENT_THRESHOLD = 0.15;
 const int FRAMES_PER_BUFFER = 256;
 const int SAMPLE_RATE = 44100;
 const int NUM_CHANNELS = 1;
@@ -34,7 +34,7 @@ PaStream* stream;
 const double SILENCE_CUTOFF = (5.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 
 // ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 2 seconds
-const double ACCEPTABLE_PHRASE_CUTOFF = (7.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
+const double ACCEPTABLE_PHRASE_CUTOFF = (7.0 * SAMPLE_RATE);
 
 int end(PaError);
 double average_buffer_level(float[]);
@@ -77,8 +77,10 @@ int main() {
             }
 
             // is freshly recorded phrase long enough?
-            if (phrase.size() > SILENCE_CUTOFF)
+            if (phrase.size() > ACCEPTABLE_PHRASE_CUTOFF) {
+                cout << "phrase is long enough to save." << endl;
                 save_phrase_to_file(phrase);
+            }
             play_random_phrase();
 
         } else {
@@ -130,7 +132,7 @@ void play(vector<float> &phrase) {
 
 void play_random_phrase() {
     vector<float> phrase;
-    int random_index = rand() % (count_saved_phrases() + 1);
+    int random_index = rand() % (count_saved_phrases());
     ifstream f(PHRASES_PATH + to_string(random_index));
 
     while (f) {
