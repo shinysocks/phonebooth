@@ -116,7 +116,7 @@ void save_phrase_to_file(vector<float> &phrase) {
         file << sample << endl;
 
     file.close();
-    cout << "saved: [" << PHRASES_PATH + to_string(n) << "]" << endl; 
+    cout << "saved as #" << n << endl; 
 }
 
 void play(vector<float> &phrase) {
@@ -131,8 +131,16 @@ void play(vector<float> &phrase) {
 }
 
 void play_random_phrase() {
+    int n = count_saved_phrases();
+
+    cout << "found " << n << " phrases" << endl;
+
+    // if nothing saved, return.
+    if (n == 0) return;
+
     vector<float> phrase;
-    int random_index = rand() % (count_saved_phrases());
+    int random_index = rand() % n;
+
     ifstream f(PHRASES_PATH + to_string(random_index));
 
     while (f) {
@@ -141,8 +149,9 @@ void play_random_phrase() {
         phrase.push_back(sample);
     } f.close();
 
+    cout << "playing phrase #" << random_index << endl;
     play(phrase);
-    cout << "played: [" << random_index << "]" << endl;
+    cout << "done.. listening" << endl;
 }
 
 PaError initialize() {
