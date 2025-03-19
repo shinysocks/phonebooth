@@ -20,5 +20,5 @@
 >
 >- build and run the project:
 >```
->make
+>make && ./phonebooth
 >```
