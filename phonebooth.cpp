@@ -31,10 +31,10 @@ const int NUM_CHANNELS = 1;
 PaStream* stream;
 
 // SILENCE_CUTOFF: length of silence until a recording is ended
-const double SILENCE_CUTOFF = (4.5 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
+const double SILENCE_CUTOFF = (4.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 
-// ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 2 seconds
-const double ACCEPTABLE_PHRASE_CUTOFF = (6.5 * SAMPLE_RATE);
+// ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 3.5 seconds
+const double ACCEPTABLE_PHRASE_CUTOFF = (7.5 * SAMPLE_RATE);
 
 int end(PaError);
 double average_buffer_level(float[]);
