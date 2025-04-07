@@ -1,4 +1,5 @@
 ## **phonebooth**
+#### [technical writeup](technical_writeup.pdf)
 
 ### resources
 >- [PortAudio/portaudio](https://github.com/PortAudio/portaudio)
