@@ -1,5 +1,7 @@
-## **phonebooth**
-#### [technical writeup](technical_writeup.pdf)
+## **Phone Booth**
+Source code for an interactive art installation by Daisy DiCarlo entitled "Phone Booth".
+#### [Confession & Phone Booth Interaction Prompts](interaction_prompts.pdf)
+#### [Technical Writeup](technical_writeup.pdf)
 
 ### resources
 >- [PortAudio/portaudio](https://github.com/PortAudio/portaudio)
