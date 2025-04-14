@@ -24,7 +24,7 @@ using namespace std;
 
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const string PHRASES_PATH = "phrases/";
-const float AMBIENT_THRESHOLD = 0.15;
+const float AMBIENT_THRESHOLD = 0.10;
 const int FRAMES_PER_BUFFER = 256;
 const int SAMPLE_RATE = 44100;
 const int NUM_CHANNELS = 1;
@@ -80,8 +80,8 @@ int main() {
             if (phrase.size() > ACCEPTABLE_PHRASE_CUTOFF) {
                 cout << "phrase is long enough to save." << endl;
                 save_phrase_to_file(phrase);
+                play_random_phrase();
             }
-            play_random_phrase();
 
         } else {
             /* 
