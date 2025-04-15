@@ -25,7 +25,7 @@ using namespace std;
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const string PHRASES_PATH = "phrases/";
 const float AMBIENT_THRESHOLD = 0.10;
-const int FRAMES_PER_BUFFER = 256;
+const int FRAMES_PER_BUFFER = 128;
 const int SAMPLE_RATE = 44100;
 const int NUM_CHANNELS = 1;
 PaStream* stream;
@@ -33,8 +33,8 @@ PaStream* stream;
 // SILENCE_CUTOFF: length of silence until a recording is ended
 const double SILENCE_CUTOFF = (4.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 
-// ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 3.5 seconds
-const double ACCEPTABLE_PHRASE_CUTOFF = (7.5 * SAMPLE_RATE);
+// ACCEPTABLE_PHRASE_CUTOFF: an acceptable phrase is at least 4.0 seconds
+const double ACCEPTABLE_PHRASE_CUTOFF = (8.0 * SAMPLE_RATE);
 
 int end(PaError);
 double average_buffer_level(float[]);
