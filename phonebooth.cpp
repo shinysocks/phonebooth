@@ -24,7 +24,7 @@ using namespace std;
 
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const string PHRASES_PATH = "phrases/";
-const float AMBIENT_THRESHOLD = 0.10;
+const float AMBIENT_THRESHOLD = 0.25;
 const int FRAMES_PER_BUFFER = 128;
 const int SAMPLE_RATE = 44100;
 const int NUM_CHANNELS = 1;
