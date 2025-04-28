@@ -12,8 +12,8 @@ Source code for an interactive art installation by Daisy DiCarlo entitled "Phone
 >- [usb_audio_card_setup_rpi](https://learn.adafruit.com/usb-audio-cards-with-a-raspberry-pi)
 
 ### photos
->[!Note]
->todo: Fine Arts Night - April 14th
+>![phone_booth_full](https://github.com/user-attachments/assets/b7aaa8a6-6af6-4ba0-bad0-9cf907591be2)
+>![phone_booth_close](https://github.com/user-attachments/assets/0ffa0b70-8ee9-473a-aeab-1a045e6d444b)
 
 ### usage
 >- ensure both [ALSA](https://www.alsa-project.org/wiki/Main_Page) and [make](https://www.gnu.org/software/make/manual/make.html) are installed
