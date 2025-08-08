@@ -44,17 +44,15 @@ int main(int argc, char* argv[]) {
     if (err != paNoError) end(err);
     vector<float> phrase;
 
-    cout << to_string(*argv[1]);
+    ifstream f(PHRASES_PATH + argv[1]);
 
-    // ifstream f(PHRASES_PATH + to_string(*argv[1]));
-    //
-    // while (f) {
-    //     float sample;
-    //     f >> sample;
-    //     phrase.push_back(sample);
-    // } f.close();
-    //
-    // play(phrase);
+    while (f) {
+        float sample;
+        f >> sample;
+        phrase.push_back(sample);
+    } f.close();
+
+    play(phrase);
 
     err = Pa_StopStream(stream);
     if (err != paNoError) end(err);
