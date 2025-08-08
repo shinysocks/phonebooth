@@ -24,7 +24,6 @@ using namespace std;
 
 const PaSampleFormat PA_SAMPLE_TYPE = paFloat32;
 const string PHRASES_PATH = "phrases/";
-const float AMBIENT_THRESHOLD = 0.25;
 const int FRAMES_PER_BUFFER = 128;
 const int SAMPLE_RATE = 44100;
 const int NUM_CHANNELS = 1;
@@ -37,60 +36,25 @@ const double SILENCE_CUTOFF = (4.0 * SAMPLE_RATE) / FRAMES_PER_BUFFER;
 const double ACCEPTABLE_PHRASE_CUTOFF = (8.0 * SAMPLE_RATE);
 
 int end(PaError);
-double average_buffer_level(float[]);
 void play(vector<float> &phrase);
-void play_random_phrase();
 PaError initialize();
-void save_phrase_to_file(vector<float> &phrase);
 
-int main() {
+int main(int argc, char* argv[]) {
     PaError err = initialize();
     if (err != paNoError) end(err);
+    vector<float> phrase;
 
-    float prev_buffer[FRAMES_PER_BUFFER];
+    cout << to_string(*argv[1]);
 
-    while (true) {
-        float buffer[FRAMES_PER_BUFFER];
-        Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
-
-        if (average_buffer_level(buffer) > AMBIENT_THRESHOLD) {
-            cout << "recording..." << endl;
-            int silence_counter = 0;
-            vector<float> phrase;
-
-            // copy previous buffer into phrase
-            for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
-                phrase.push_back(prev_buffer[j]);
-            }
-
-            while (silence_counter < SILENCE_CUTOFF) {
-                double average = average_buffer_level(buffer);
-
-                for (int j = 0; j < FRAMES_PER_BUFFER; j++) {
-                    phrase.push_back(buffer[j]);
-                }
-
-                Pa_ReadStream(stream, buffer, FRAMES_PER_BUFFER);
-
-                if (average < AMBIENT_THRESHOLD) silence_counter++;
-                else silence_counter = 0;
-            }
-
-            // is freshly recorded phrase long enough?
-            if (phrase.size() > ACCEPTABLE_PHRASE_CUTOFF) {
-                cout << "phrase is long enough to save." << endl;
-                save_phrase_to_file(phrase);
-                play_random_phrase();
-            }
-
-        } else {
-            /* 
-             * save `buffer` to `prev_buffer` in case the next is loud enough
-             * to prevent phrase from starting too abruptly
-             */ 
-            copy(buffer, buffer + FRAMES_PER_BUFFER, prev_buffer);
-        }
-    }
+    // ifstream f(PHRASES_PATH + to_string(*argv[1]));
+    //
+    // while (f) {
+    //     float sample;
+    //     f >> sample;
+    //     phrase.push_back(sample);
+    // } f.close();
+    //
+    // play(phrase);
 
     err = Pa_StopStream(stream);
     if (err != paNoError) end(err);
@@ -99,24 +63,6 @@ int main() {
     if (err != paNoError) end(err);
 
     return end(err);
-}
-
-unsigned int count_saved_phrases() {
-    unsigned int n = 0;
-    for (auto _ : filesystem::directory_iterator(PHRASES_PATH))
-        n++;
-    return n;
-}
-
-void save_phrase_to_file(vector<float> &phrase) {
-    auto n = count_saved_phrases();
-    ofstream file(PHRASES_PATH + to_string(n));
-
-    for (auto sample : phrase)
-        file << sample << endl;
-
-    file.close();
-    cout << "saved as #" << n << endl; 
 }
 
 void play(vector<float> &phrase) {
@@ -128,30 +74,6 @@ void play(vector<float> &phrase) {
     }
 
     phrase.clear();
-}
-
-void play_random_phrase() {
-    int n = count_saved_phrases();
-
-    cout << "found " << n << " phrases" << endl;
-
-    // if nothing saved, return.
-    if (n == 0) return;
-
-    vector<float> phrase;
-    int random_index = rand() % n;
-
-    ifstream f(PHRASES_PATH + to_string(random_index));
-
-    while (f) {
-        float sample;
-        f >> sample;
-        phrase.push_back(sample);
-    } f.close();
-
-    cout << "playing phrase #" << random_index << endl;
-    play(phrase);
-    cout << "done.. listening" << endl;
 }
 
 PaError initialize() {
@@ -189,13 +111,6 @@ PaError initialize() {
     err = Pa_StartStream(stream);
 
     return err;
-}
-
-double average_buffer_level(float buffer[]) {
-    double average = 0.0;
-    for (int j = 0; j < FRAMES_PER_BUFFER; j++)
-        average += abs(buffer[j]);
-    return (average / (double) FRAMES_PER_BUFFER);
 }
 
 int end(PaError err) {
