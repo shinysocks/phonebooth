@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for file in $(ls -1 | grep -v *.py | grep -v convert | grep -v *.wav);
+do
+    python3 test.py $file
+done

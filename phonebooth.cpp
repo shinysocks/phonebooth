@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
 void play(vector<float> &phrase) {
     // skip the last 3 seconds
-    int playback_duration = (phrase.size() / FRAMES_PER_BUFFER) - (3 * SAMPLE_RATE / FRAMES_PER_BUFFER);
+    int playback_duration = (phrase.size() / FRAMES_PER_BUFFER);
 
     for (int i = 0; i < playback_duration; i++) {
         Pa_WriteStream(stream, &phrase[i * FRAMES_PER_BUFFER], FRAMES_PER_BUFFER);
